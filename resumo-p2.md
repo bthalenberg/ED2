@@ -32,7 +32,8 @@ Cada nó de uma árvore binária tem quatro campos:
 ```
 Key key;
 Value val;
-Node left, right;```
+Node left, right;
+```
 
 Dizemos que x é **pai** de y se ```x.left == y || x.right == y```. Nesse caso, y é **filho**
 de x. Uma **folha** é um nó sem filhos (```x.left == null && x.right == null```).

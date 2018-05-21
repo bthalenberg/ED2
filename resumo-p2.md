@@ -397,7 +397,6 @@ private Node delete(Node h, Key key) {
     return balance(h);
 }
 ```
-```
 
 ## Hashing
 

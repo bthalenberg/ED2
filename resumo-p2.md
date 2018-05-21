@@ -331,7 +331,7 @@ private Node put(Node h, Key key, Value val) {
 No caminho até a chave a ser removida, o algoritmo mantém a relação invariante
 ```o nó sendo examinado é um 3-nó ou um 4-nó (temporário)```.
 
-No meio do caminho, sabeos que o nó corrente h é um 3-nó ou um 4-nó. Antes de
+No meio do caminho, sabemos que o nó corrente h é um 3-nó ou um 4-nó. Antes de
 movermos para o nó mais à esquerda precisamos nos certificar que esse nó é um
 3-nó ou um 4-nó. Desta forma, ao atingir a folha mais à esquerda, teremos chegado
 a um 3-nó ou um 4-nó. Removendo o item mais à esquerda (delMin()), teremos um
@@ -397,3 +397,96 @@ private Node delete(Node h, Key key) {
     return balance(h);
 }
 ```
+```
+
+## Hashing
+
+* Referências: Hashing (PF); Hash tables (S&W); slides (S&W); Hashing functions
+(S&W); CLRS ch. 12; TAOP vol.3 ch. 6.4;
+
+### Endereçamento direto
+
+No endereçamento direto temos tabela indexada pelas chaves, uma posição para cada
+possível índice. Cada posição armazena o valor correspondente a uma dada chave.
+É uma técnica que funciona bem quando o universo de chaves é razoavelmente pequeno.
+Em uma tabela de símbolos com endereçamento direto o consumo de tempo de get(),
+put() e delete() é O(1).
+
+Seus defeitos são:
+* Em geral, chaves não são inteiros não-negativos pequenos.
+* Desperdício de espaço: é possível que a maior parte da tabela fique vazia.
+
+### Definição
+
+Uma tabela de dispersão (=hash table) é uma maneira de organizar uma tabela de
+símbolos. Consumo de tempo amortizado O(1).
+
+* Universo de chaves: conjunto de todas as possíveis chaves.
+* Chaves realmente usadas são, em geral, uma parte pequena do universo.
+* A tabela terá forma st[0, ..., m-1], onde m é o tamanho da tabela.
+
+Uma função de dispersão (= hash function) é uma maneira de mapear o universo de
+chaves no conjunto de índices da tabela. A função de dispersão recebe uma chave
+key e retorna um inteiro h(key) no intervalo 0, ..., m-1. O número h(key) é
+o código de dispersão (= hash code) da chave.
+
+As _desiderata_ de uma função de hashing são:
+
+* Eficácia (calcula h(key) em O(1));
+* Uniformidade (espalha bem as chaves pelo intervalo).
+
+Uma função só é eficiente se espalha as chaves pelo intervalo de índices de maneira
+razoavelmente uniforme.
+
+Como funções injetoras são difíceis de encontrar, ainda que o tamanho da tabela
+seja razoavelmente grande, teremos que lidar com colisões.
+
+### Função de hashing modular
+
+* **Método da divisão ou hash modular**: supondo que as chaves são inteiros positivos
+podemos usar a função modular (resto da divisão por m):
+* **Vantagens:** rápida, faz apenas uma divisão.
+* **Desvantagem**: m deve ser bem escolhido. Um primo não muito perto de uma potência
+de 2 parece ser uma boa escolha para m.
+
+```
+private int hash(int key) {
+    return key % m;
+}
+
+// No caso de strings, podemos iterar sobre seus caracteres
+private int hash(String key) {
+    int h = 0;
+    for (int i = 0; i < key.length(); i++)
+        h = (31 * h + key.charAt(i)) % m;
+    return h;
+}
+```
+
+### Função de hashing multiplicativa
+
+* escolha uma constante A, 0 < A < 1;
+* multiplique key por A;
+* extraia a parte fracional de key x A;
+* multiplique a parte fracionária por m;
+* o valor de hash é o chão dessa multiplicação
+
+* **Desvantagem**: mais lenta que o hash modular;
+* **Vantagem**: o valor de m não é crucial.
+
+### Colisões
+
+Dizemos que há uma colisão quando duas chaves diferentes são levadas no mesmo índice.
+Há algumas maneiras de tratar colisões, dentre elas _separate chaining_, _linear
+probing_ e _double hashing_.
+
+#### Separate chaining (colisões por listas encadeadas)
+
+Para cada índice h da tabela há uma lista encadeada que armazena todos os objetos
+que a função de dispersão leva em h. Essa solução é muito boa se cada uma das
+listas de colisão resultar curta.
+
+Se o numero total de chaves usadas por n, o comprimento de cada lista deveria,
+idealmente, estar próximo de _a_ = n/m. O valor _a_ é chamado de fator de carga da tabela. Uma solução elegante para manter o fator de carga pequeno é realizar
+rehashing, ou seja, aumentar o tamanho da tabela se _a_ for maior do que determinado
+valor.

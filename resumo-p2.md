@@ -252,3 +252,144 @@ private class Node {
 
 A operação de busca (= get()) para BSTs rubro-negras é exatamente igual ao das BSTs
 comuns.
+
+O código de inserção depende de operações de **rotação**. Durante uma operação de inserção, podemos ter, temporariamente, um link rubro inclinado para a direita ou dois links rubros incidindo no mesmo nó. Para corrigir isso, usamos rotações e inversões de cores, respectivamente.
+
+#### Operações de correção
+
+* **Rotação esquerda (ou horária)** em torno do nó h: o filho direito de h sobe e adota h como seu filho esquerdo.
+* **Rotação direita (ou anti-horária)** em torno do nó h: o filho esquerdo de h sobe e adota h como seu filho direito.
+* **Inversão de cores (flipping colors)**: corresponde a espatifar um 4-nó e subir a chave do meio para o nó pai.
+
+```
+private Node rotateLeft(Node h) {
+    Node x = h.right;
+    h.right = x.left;
+    x.left = h;
+    x.color = h.color;
+    h.color = RED;
+    x.n = h.n;
+    h.n = 1 + size(h.left) + size(h.right);
+    return x;
+}
+
+private Node rotateRight(Node h) {
+    Node x = h.left;
+    h.left = x.right;
+    x.right = h;
+    x.color = h.color;
+    h.color = RED;
+    x.n = h.n;
+    h.n = 1 + size(h.left) + size(h.right);
+    return x;
+}
+
+private void flipColors(Node h) {
+    h.color = !h.color;
+    h.left.color = !h.left.color;
+    h.right.color = !h.right.color;
+}
+
+// Verifica invariante rubro-negro quando estamos voltando da recursão de inserção
+private Node balance(Node h) {
+    // verifica se o link rubro está para a esquerda (e arruma se for o caso)
+    if (isRed(h.right))
+        h = rotateLeft(h);
+    // verifica se a ordem dos elementos no nó está correta (e arruma se for o caso)
+    if (isRed(h.left) && isRed(h.left.left))
+        h = rotateRight(h);
+    // verifica se é 4=nó e espatifa
+    if (isRed(h.left) && isRed(h.right))
+        flipColors(h);
+    h.n = size(h.left) + size(h.right) + 1;
+    return h;
+}
+```
+
+#### Inserção
+
+```
+private Node put(Node h, Key key, Value val) {
+    if (h == null) return new Node(key, val, 1, RED);
+    int cmp = key.compareTo(h.key);
+    if (cmp < 0)
+        h.left = put(h.left, key, val);
+    else if (cmp > 0)
+        h.right = put(h.right, key, val);
+    else h.val = val;
+    h = balance(h);
+    return h;
+}
+```
+
+#### Remoção
+
+No caminho até a chave a ser removida, o algoritmo mantém a relação invariante
+```o nó sendo examinado é um 3-nó ou um 4-nó (temporário)```.
+
+No meio do caminho, sabeos que o nó corrente h é um 3-nó ou um 4-nó. Antes de
+movermos para o nó mais à esquerda precisamos nos certificar que esse nó é um
+3-nó ou um 4-nó. Desta forma, ao atingir a folha mais à esquerda, teremos chegado
+a um 3-nó ou um 4-nó. Removendo o item mais à esquerda (delMin()), teremos um
+2-nó ou 3-nó, e devemos voltar espatifando os 4-nós que restaram pelo caminho.
+
+```
+public void delMin() {
+    if (r == null) return;
+    if (!isRed(r.left) && !isRed(r.right))
+        r.color = RED;
+    r = delMin(r);
+    if (!isEmpty()) r.color = BLACK;
+}
+
+private Node delMin(Node h) {
+    if (h.left == null) return null;
+    if (!isRed(h.left) && !isRed(h.left.left))
+        h.moveRedLeft(h);
+    h.left = delMin(h.left);
+    return balance(h);
+}
+
+private Node moveRedLeft(Node h) {
+    flipcolors(h);
+    if (isRed(h.right.left)) {
+        h.right = rotateRight(h.right);
+        h = rotateLeft(h);
+        flipColors(h);
+    }
+    return h;
+}
+
+private Node moveRedRight(Node h) {
+    flipcolors(h);
+    if (isRed(h.left.left)) {
+        h = rotateRight(h);
+        flipColors(h);
+    }
+    return h;
+}
+
+private Node delete(Node h, Key key) {
+    if (key.compareTo(h.key) < 0) {
+        if (!isRed(h.left) && !isRed(h.left.left))
+            h = moveRedLeft(h);
+        h.left = delete(h.left, key);
+    }
+    else {
+        if (isRed(h.left))
+            h = rotateRight(h);
+        if (key.equals(h.key) && (h.right == null))
+            return null;
+        if (!isRed(h.right) && !isRed(h.right.left))
+            h = moveRedRight(h);
+        if (key.equals(h.key)) {
+            Node x = min(h.right);
+            h.key = x.key;
+            h.val = x.val;
+            h.right = delMin(h.right);
+        }
+        else h.right = delete(h.right, key);
+    }
+    return balance(h);
+}
+```

@@ -567,7 +567,8 @@ mal sucedidas, é (1 + 1/(1-a)^2).1/2
 
 ### Consumo de memória para as diferentes STs:
 
-| **método** | **espaço usado** para n itens |
+| método | espaço usado para n itens |
+| ------------- |-------------|
 | separate chaining | ~48n + 64m |
 | linear probing | ~32n a ~128n |
 | BSTs | ~56n |

@@ -116,6 +116,7 @@ private Node delete(Node x, Key key) {
     }
     return x;
 }
+```
 
 ### Maneiras de varrer uma árvore
 

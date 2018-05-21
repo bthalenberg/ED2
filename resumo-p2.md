@@ -438,6 +438,10 @@ As _desiderata_ de uma função de hashing são:
 Uma função só é eficiente se espalha as chaves pelo intervalo de índices de maneira
 razoavelmente uniforme.
 
+* **Hipótese do hashing uniforme:** vamos supor que nossas funções de hashing
+ distribuem as chaves pelo intervalo de inteiros 0, ..., m de maneira uniforme e
+ independente.
+
 Como funções injetoras são difíceis de encontrar, ainda que o tamanho da tabela
 seja razoavelmente grande, teremos que lidar com colisões.
 
@@ -487,6 +491,93 @@ que a função de dispersão leva em h. Essa solução é muito boa se cada uma 
 listas de colisão resultar curta.
 
 Se o numero total de chaves usadas por n, o comprimento de cada lista deveria,
-idealmente, estar próximo de _a_ = n/m. O valor _a_ é chamado de fator de carga da tabela. Uma solução elegante para manter o fator de carga pequeno é realizar
+idealmente, estar próximo de _a_ = n/m. O valor _a_ é chamado de fator de carga da tabela.
+
+Em uma tabela de hash encadeada com m listas e n chaves, se vale a hipótese do
+hashing uniforme, a probabilidade de que o número de chaves em cada lista não passa
+de _a_ = n/m multiplicado por uma pequena constante é muito próxima de 1. Uma solução elegante para manter o fator de carga pequeno é realizar
 rehashing, ou seja, aumentar o tamanho da tabela se _a_ for maior do que determinado
 valor.
+
+```
+public void put(Key key, Value val) {
+    if (n >= 10*m) resize(2*m);
+    int i = hash(key);
+    if (!st[i].contains(key)) n++;
+    st[i].put(key, val);
+}
+
+private void resize(int chains){
+    HashST<Key, Value> t = new HashST<Key, Value>(chains);
+    for (int i = 0; i < m; ++i) {
+        for (Key key: st[i].keys())
+            t.put(key, st[i].get(key));
+    }
+    this.m = t.m;
+    this.n = t.n;
+    this.st = t.st;
+}
+```
+
+##### Consumo de tempo
+
+Supondo que h(key) é computada em O(1), o tempo gasto pela inserção depende do
+comprimento da lista st[h(key)]. O pior caso ocorre quando todas as n chaves vão para a mesma lista. Logo, o consumo de  tempo médio depende de quão bem a função de
+ hashing distribui as chaves.
+
+Em uma busca malsucedida, percorremos a lista st[h(key)] até o final. O comprimento
+esperado dessa lista é _a_. Logo, o consumo de tempo médio de uma busca malsucedida
+é O(1 + _a_).
+
+Em uma busca bem sucedida, o número de chaves examinado é 1 mais o número de
+ elementos na lista encadeada antes de key (elementos que foram inseridos depois
+de key, já que sempre inserimos na cabeça da lista). Depois de muitas contas
+(SPOILERS) concluimos que o tempo esperado de busca é O(1 + _a_).
+
+Logo, o consumo das operações get, put e delete é O(n/m) = O(_a_). Se n <= cm para alguma constante c, ou seja, n = O(m), então _a_ é O(1).
+
+### Open addressing e linear probing
+
+Open addressing busca evitar o espaço extra usado por listas ligadas colocando todas
+as chaves na tabela. O fator de carga _a_ é menor do que 1 (idealmente, _a_ <= 1/2). Estendemos a função de hash para ter o número da sondagem como segundo parâmetro, e
+ a sequência de todas as sondagens h(key, 0), ..., h(key, m-1) deve ser uma permutação de 0, ..., m-1.
+
+O método de open addressing mais simples é conhecido por sondagem linear (= linear
+probing). Todos os itens são armazenados em um vetor e, quando ocorre uma colisão,
+procuramos a próxima posição vaga do vetor. Quanto maior o fator de carga, mais tempo
+as funções de busca e inserção vão consumir. Durante a busca, há três possibilidades:
+
+* encontramos a chave e paramos a busca;
+* posição não ocupada, paramos a busca;
+* posição está ocupada e não é a chave, vamos para a pŕoxima posição.
+
+```
+public Value get(Key key) {
+    for (int i = hash(key); keys[i] != null; i = (i + 1) % m)
+        if (keys[i].equals(key)) return vals[i];
+    return null;
+}
+```
+
+#### Consumo de tempo
+
+O consumo de tempo de uma busca com linear probing depende, no pior caso, do tamanho
+do maior cluster. De acordo com a hipótese do hashing uniforme, o número médio de
+sondagens em buscas bem sucedidas é aproximadamente (1 + 1/(1-a)).1/2 e, em buscas
+mal sucedidas, é (1 + 1/(1-a)^2).1/2
+
+### Consumo de memória para as diferentes STs:
+
+| **método** | **espaço usado** para n itens |
+| separate chaining | ~48n + 64m |
+| linear probing | ~32n a ~128n |
+| BSTs | ~56n |
+
+-------------------------------------------------------------------------------------
+**Uma observação importante**: note a diferença de interpretação do fator de carga.
+Em:
+* **separate chaining** o fator de carga é o número médio de itens por lista; ele
+pode ser maior que 1.
+* **open addressing** o fator de carga é a fração da tabela que está ocupada; ele
+deve ser menor que 1.
+-------------------------------------------------------------------------------------

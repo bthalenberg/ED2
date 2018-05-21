@@ -168,5 +168,87 @@ while (true) {
     // acabamos de examinar u
     vistos_examinados.insert(u)
 }
+```
 
 ## Árvores 2-3
+
+### Definição
+
+Uma árvore 2-3 busca resolver a questão de como manter uma BST aproximadamente
+balanceada. Desejamos que a BST tenha altura próxima de lg n, sendo n o número
+de nós, qualquer que seja a sequência de buscas e inserções. Árvores 2-3 são
+a abstração de árvores rubro-negras, que veremos mais adiante.
+
+Uma árvore 2-3 é:
+* uma árvore vazia;
+* ou um nó simples com 2 links: um link left e um right, cada um para uma árvore 2-3;
+* ou um nó duplo com 3 links: um link left, um mid e um right, cada um para uma
+árvore 2-3.
+
+Dizemos que uma árvore 2-3 está perfeitamente balanceada se todos os links null estão
+no mesmo nível. Toda árvore 2-3 de altura h tem no mínimo 2^{h+1} - 1 nós e no
+máximo 3^{h+1} - 1 nós.
+
+Uma árvore de busca 2-3 é uma árvore 2-3 que segue as propriedades normais de uma
+árvore de busca. Especificamente, em nós duplos, o link mid fornece as chaves
+que estão entre as duas chaves de um nó.
+
+### Operações
+
+Numa árvore 2-3 com n nós, busca e inserção nunca visitam mais que lg(n+1) nós.
+Cada visita faz no máximo 2 comparações de chaves.
+
+O processo de inserção consiste em procurar o nó (a partir do maior) em que o valor
+se encaixaria. Transformar esse nó em um 2, 3 ou 4-nó. Nesse último caso,
+espatifamos o nó (a chave do meio sobe de nível), e assim sucessivamente, até que
+encontremos um nó que não necessite ser espatifado. Caso tenhamos subido até a
+raiz e ainda assim não tenhamos encontrado tal nó, espatifamos a raíz, aumentando
+a altura da árvore. Transformações locais preservam ordem e balanceamento.
+
+## Árvores rubro-negras (red & black trees)
+
+### Definição
+
+Uma BST rubro-negra é uma BST que simula uma árvore 2-3. Cada 3-nó da árvore 2-3
+é representado por dois 2-nós ligados por um link rubro, ou seja, se os links
+rubros forem desenhados horizontamente e depois contraídos, teremos uma árvore 2-3.
+Nossas BSTs são **esquerdistas** pois os links rubros são sempre inclinados para a esquerda.
+
+Uma BST rubro-negra é uma BST cujos links são negros e rubros e que satisfaz as
+seguintes propriedades:
+* links rubros se inclinam para a esquerda;
+* nenhum nó incide em dois links rubros;
+* balanceamento negro perfeito: todo caminho da raiz até um link null tem o mesmo
+número de links negros.
+
+O **balanceamento negro perfeito** vem do fato de que os links negros correspondem
+aos links da árvore 2-3.
+
+A **profundidade negra** de um nó x é o número de links negros no caminho da raiz
+até x. A **altura negra** da árvore é o máximo da profundidade negra de todos os nós.
+
+------------------------------------------------------------------------------------
+_Uma observação de implementação_: No CLRS as árvores rubro-negras tem **nós**, e não
+links, rubros e negros. Nós rubros são os referenciados por links rubros, e nós
+negros são os referenciados por links negros. Isso tem a ver com a implementação de
+fato da BST, pois é inconveniente armazenar a cor de um link na ED, e é mais simples
+armazenar essa informação nos nós (isso também é feito em S&W, chamar o link de
+rubro ou de negro é meramente didático).
+
+A cor de um nó é a cor do único link que entra nele. A raíz é considerada negra.
+------------------------------------------------------------------------------------
+
+```
+private class Node {
+    Key key;
+    Value val;
+    Node left, right;
+    int n; // número de nós na subárvore
+    boolean color; // cor do link para este nó
+}
+```
+
+### Operações
+
+A operação de busca (= get()) para BSTs rubro-negras é exatamente igual ao das BSTs
+comuns.

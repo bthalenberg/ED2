@@ -172,6 +172,8 @@ while (true) {
 
 ## Árvores 2-3
 
+* Referências: Árvores 2-3 (PF); Balanced Search Trees (S&W); slides (S&W).
+
 ### Definição
 
 Uma árvore 2-3 busca resolver a questão de como manter uma BST aproximadamente
@@ -206,6 +208,8 @@ raiz e ainda assim não tenhamos encontrado tal nó, espatifamos a raíz, aument
 a altura da árvore. Transformações locais preservam ordem e balanceamento.
 
 ## Árvores rubro-negras (red & black trees)
+
+* Referências: BSTs rubro-negras (PF); Balanced Search Trees (S&W); slides (S&W).
 
 ### Definição
 

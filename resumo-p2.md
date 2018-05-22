@@ -618,7 +618,6 @@ Uma trie (=R-way trie) é um tipo de árvore usado para implementar STs de strin
 
 Utilizamos uma classe auxiliar Alphabet que tem a seguinte API:
 
-```
 | método | comportamento |
 | --- | --- |
 | Alphabet(String s) | cria alfabeto com os caracteres em s |
@@ -627,7 +626,6 @@ Utilizamos uma classe auxiliar Alphabet que tem a seguinte API:
 | boolean contains(char c) | c está no alfabeto? |
 int R() | base do alfabeto |
 int lgR() | número de bits de um índice |
-```
 
 Para ASCII, temos ```toIndex(c) == c``` e ```toChar(i) == i```
 
@@ -858,3 +856,43 @@ A propriedade mais importante de uma TST é que ela tem apenas três links por
 nó. O número de links em uma TST com n chaves de comprimento médio w é
  entre 3n e 3nw. O número esperado de nós visitados durante uma busca malsucedida
  em uma TST com n chaves aleatórias é aproximadamente lg n.
+
+ ## Compressão de dados
+
+* Referências: Entrada e saída binárias (PF), Compressão de dados (PF), Data
+compression (S&W), slides (S&W).
+
+### Definição
+
+O problema da compressão de dados consiste em representar um arquivo grande por
+outro menor, diminuindo o espaço de armazenamento e o tempo de transmissão.
+Especificamente, representar um dado fluxo de bits por outro mais curto.
+
+Esquema básico de compressão de dados:
+
+* Um compressor transforma um fluxo de bits B em um fluxo C(B).
+* Um expansor transforma C(B) de volta em B.
+* Fluxo decodificado é idêntico ao original, não há perda de informação na compressão.
+
+|B| é o **número de bits** de B. A **taxa** de compressão é dada por |C(B)|/|B|.
+Nenhum algoritmo pode garantir taxa de compressão estritamente menor que 1 para
+todo e qualquer fluxo de bits. Há algoritmos melhores para cada tipo de arquivo.
+Por exemplo, no caso do genoma, o alfabeto consiste de 4 caracteres. Assim, podemos
+representá-los em 2 bits (= 4 possibilidades), comprimindo o arquivo. Para isso,
+precisamos ter esse tipo de informação antes.
+
+### Entrada e saídas binárias
+
+Uma **cadeia de bits** é uma sequência de bits. Um **fluxo de bits** é uma cadeia
+de bits na entrada ou na saída de um programa. Em S&W temos a seguinte API para
+a manipulação do fluxo de bits:
+
+| nome do método | comportamento |
+| ---- | ---- |
+| boolean readBoolean() | lê 1 bit |
+| char readChar() | lê 8 bits |
+| char readChar(int r) | lê 1 <= r <= 16 bits |
+| String readString | lê fluxo em blocos de 8 bits |
+| int readInt() | lê 32 bits |
+| int readInt() | lê 1 <= r <= 32 bits |
+boo

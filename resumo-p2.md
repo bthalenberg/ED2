@@ -239,7 +239,8 @@ fato da BST, pois é inconveniente armazenar a cor de um link na ED, e é mais s
 armazenar essa informação nos nós (isso também é feito em S&W, chamar o link de
 rubro ou de negro é meramente didático).
 
-A cor de um nó é a cor do único link que entra nele. A raíz é considerada negra.
+**A cor de um nó é a cor do único link que entra nele. A raíz é considerada negra.**
+
 ------------------------------------------------------------------------------------
 
 ```

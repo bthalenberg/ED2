@@ -895,4 +895,59 @@ a manipulação do fluxo de bits:
 | String readString | lê fluxo em blocos de 8 bits |
 | int readInt() | lê 32 bits |
 | int readInt() | lê 1 <= r <= 32 bits |
-boo
+
+### Codificação de comprimento de carreira (run-length encoding, RLE)
+
+Exemplo: cadeia de bits abaixo tem uma carreira de 15 0s, uma de 7 1s, uma de 7
+0s e uma de 11 1s.
+
+0000000000000001111111000000011111111111
+
+Ela pode ser representada pela sequência 15 7 7 11. Usando 8 bits para cada um desses
+números, teremos uma cadeia de apenas 32 bits.
+
+Esse tipo de compressão é muito bom para bitmaps (mas ruim para textos ASCII). No
+caso dos bitmaps, a taxa de compressão diminui linearmente com o aumento da resolução.
+
+#### Decisões de projeto
+
+* Use 8 bits para cada comprimento de carreira
+* Use carreiras de comprimento 0 para dividir carreiras muito longas em blocos de
+comprimento menor que 256.
+* A primeira carreira é sempre de 0 (e pode ser vazia).
+
+```
+public static void compress() {
+    char cnt = 0;
+    boolean b, old = false;
+    while (!BinaryIn.isEmpty()) {
+        b = BinaryIn.readBoolean();
+        if (b != old) {
+            BinaryOut.write(cnt);
+            cnt = 0;
+            old = !old;
+        }
+        else {
+            if (cnt == 255) {
+                BinaryOut.write(cnt);
+                cnt = 0;
+                BinaryOut.write(cnt);
+            }
+        }
+        cnt++;
+    }
+    BinaryOut.write(cnt);
+    BinaryOut.close();
+}
+
+public static void expand() {
+    boolean b = false;
+    while (!BinaryIn.isEmpty()) {
+        char cnt = BinaryInt.readChar();
+        for (int i = 0; i < cnt; i++)
+            BinaryOut.write(b);
+        b = !b;
+    }
+    BinaryOut.close();
+}
+```

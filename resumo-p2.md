@@ -581,3 +581,163 @@ pode ser maior que 1.
 * **open addressing** o fator de carga é a fração da tabela que está ocupada; ele
 deve ser menor que 1.
 -------------------------------------------------------------------------------------
+
+## Tries (árvores digitais)
+
+* Referências: Tries (PF); Tries (S&W); slides (S&W), TAOP vol. 3 ch. 6.3
+
+### Definição
+
+Uma trie (=R-way trie) é um tipo de árvore usado para implementar STs de strings
+ sobre um alfabeto com R símbolos. Tries também são conhecidas como árvores digitais
+ e como árvores de prefixos.
+
+ Além dos métodos usuais put, get e delete, a API de uma trie possui três métodos
+ específicos:
+
+ * keysWithPrefix(String s): todas as chaves que têm prefixo s;
+ * keysThatMatch(String s): todas as chaves que casam com s quando '.' é usado como
+ coringa;
+ * longestPrefixOf(String s): a chave mais longa que é prefixo de s.
+
+ Os caracteres são implicitamente definidos pelo índice de um link. Cada node tem um
+ vetor de links e um valor.
+
+ * Chaves ficam codificadas nos caminhos que começam na raiz.
+ * Prefixos de chaves, que nem sempre são chaves, estão representados na trie.
+ * Ao descer da raiz até um nó x, soletramos uma string s. Dizemos que s leva ao nó
+ x. A string que leva a um nó x é uma chave sse ```x.val != null```.
+
+
+ ```
+ private static class Node {
+     private Value val;
+     private Node[] next = new Node[R]; // muitos dos R ponteiros serão null
+ }
+```
+
+Utilizamos uma classe auxiliar Alphabet que tem a seguinte API:
+
+```
+| método | comportamento |
+| --- | --- |
+| Alphabet(String s) | cria alfabeto com os caracteres em s |
+| int toIndex(char c) | autoexplicativo |
+| char toChar(int i) | autoexplicativo |
+| boolean contains(char c) | c está no alfabeto? |
+int R() | base do alfabeto |
+int lgR() | número de bits de um índice |
+```
+
+Para ASCII, temos ```toIndex(c) == c``` e ```toChar(i) == i```
+
+### Operações
+
+#### Busca
+
+Seguimos os ponteiros soletrando a string key:
+
+```
+private Node get(Node r, String key, int d) {
+    if (x == null) return;
+    if (d == key.length()) return x;
+    char c = key.charAt(d);
+    return get(x.next[c], key, d+1);
+}
+```
+
+#### Inserção
+
+É feita uma busca. Se a key é encontrada, val é substituído. Caso contrário, chegamos
+a um null e devemos continuar a inserção ou chegamos no último caractere de key.
+
+```
+private Node put(Node x, String key, Value val, int d) {
+    if (x == null) x = new Node();
+    if (d == key.length()) {
+        if (x.val == null) n++;
+        x.val = val;
+        return x;
+    }
+    char c = key.charAt(d);
+    x.next[c] = put(x.next[c], key, val, d+1);
+    return x;
+}
+```
+
+#### Deleção
+
+```
+private Node delete(Node x, String key, int d){
+    if (x == null) return null;
+    if (d == key.length()) x.val = null;
+    else {
+        char c = key.charAt(d);
+        x.next[c] = delete(x.next[c], key, d+1);
+    }
+    if (x.val != null) return x;
+    for (char c = 0; c < R; c++)
+        if (x.next[c] != null) return x;
+    return null;
+}
+```
+
+#### Métodos especiais
+
+* **collect():** O método coloca na fila q todas as chaves da subtrie cuja raiz é x depois de
+acrescentar o prefixo pre a todas essas chaves
+
+```
+private void collect(Node x, String pre, Queue<String> q) {
+    if (x == null) return;
+    if (x.val != null) q.enqueue(pre);
+    for (char c = 0; c < R; c++)
+        collect(x.next[c], pre+c, q);
+}
+```
+
+* **keysThatMatch()**: devolve todas as chaves que casam com o padrão pat. Utiliza-se
+do método auxiliar match, que é uma variação de collect.
+
+```
+private void match(Node x, String pre, String pat, Queue<String> q) {
+    if (x == null) return;
+    if (pre.length() == pat.length() && x.val != null)
+        q.enqueue(pre);
+    if (pre.length() == pat.length()) return;
+    char c_next = pat.charAt(pre.length);
+    for (int c = 0; c < R; c++)
+        if (c_next == "." || c_next == c)
+        collect(x.next[c], pre+c, pat, q);
+}
+```
+
+* **longestPrefixOf()**: devolve a maior chave que é prefixo de s
+
+```
+public String longestPrefixOf(String s) {
+    int max = -1;
+    Node x = r;
+    for (int d = 0; x != null; d++) {
+        if (x.val != null) max = d;
+        if (d == s.length()) break;
+        x = x.next[s.charAt(d)];
+    }
+    if (max == -1) return null;
+    return s.substring(0, max);
+}
+```
+
+### Consumo de tempo e espaço
+
+A estrutura de uma trie não depende da ordem de inserção ou remoção. O consumo de
+tempo não depende do número n de itens.
+
+O número de nós visitados por get(key) é no máximo 1 + w, onde w = key.length().
+O número de links em uma trie é entre Rn e Rnw, onde w é o comprimento médio de uma
+chave.
+
+O número esperado de nós visitados durante uma busca malsucedida em uma trie com n
+chaves aleatórias sobre um alfabeto de tamanho R é aproximadamente log_R n.
+
+## Tries ternárias (TSTs)

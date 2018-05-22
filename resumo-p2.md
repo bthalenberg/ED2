@@ -951,3 +951,159 @@ public static void expand() {
     BinaryOut.close();
 }
 ```
+
+## Algoritmo de huffman
+
+* Referências: algoritmo de Huffman (PF), Data Compression (S&W), slides (S&w).
+
+O algoritmo de Huffman recebe um fluxo de bits e devolve um fluxo de bits. O
+fluxo original é lido de 8 em 8 bits. Tudo se passa como se o algoritmo transformasse
+uma string em uma cadeia de bits. Cada caractere é convertido em uma pequena cadeia
+de bits, que é seu código.
+
+Uma tabela de códigos leva cada caractere de 8 bits no seu código. A tabela é uma
+ST em que as chaves são os caracteres e os valores são os códigos.
+
+A **ideia central do algoritmo** é usar *códigos curtos para caracteres frequentes*
+e deixar códigos mais longos para os caracteres mais raros. A tabela de códigos será
+um simples vetor de strings st[0, ..., 255] indexado pelos 256 caracteres ASCII.
+A tabela de códigos deve ser **injetora** e livre de prefixos, ou seja, nenhum
+código poderá ser prefixo de outro.
+
+A **tabela de códigos inversa** leva cada código no seu caractere correspondente.
+É uma ST de strings: as chaves são strings de 0s e 1s e os valores são caracteres.
+
+### Trie do código
+
+A tabela será representada por uma trie binária. Como a tabela é livre de prefixos,
+as chaves estão somente nas folhas. Diremos que essa é a trie do código.
+
+A tabela não é universal. É construída sob medida para a string ser codificada de
+tal modo que o comprimento da cadeia codificada seja o menor possível quando
+comparado com outros códigos livres de prefixos. Primeiro, construímos a trie do
+código, depois extraímos dela a tabela de códigos.
+
+```
+private static class Node implements Comparable<Node> {
+    private char ch;
+    private int freq;
+    private final Node left, right;
+
+    public int compareTo(Node that) {
+        return this.freq - that.freq;
+    }
+}
+```
+
+#### Construção da trie
+
+No início de cada iteração temos uma coleção de tries mutuamente disjuntas. Dada a
+string a ser decodificada, a coleção de tries inicial é construída assim:
+
+* Determine a frequência de cada caractere da string original;
+* Para cada caractere, crie um nó e armazene o caractere e sua frequência nos campos ch e freq.
+* Cada nó será uma trie da coleção inicial.
+
+Assim, no início da primeira iteração, cada trie tem um único nó. Repita a seguinte
+iteração até que a coleção de tries tenha apenas uma:
+
+* Escolha duas tries cujas raízes, x e y, tenham freq mínima;
+* Crie um novo nó parent e faça com que x e y sejam filhos desse nó;
+* Faça parent.freq = x.freq + y.freq;
+* Insira essa nova trie na coleção.
+
+A cadeia de bits produzida pelo algoritmo de Huffman é mínima no seguinte sentido:
+    nenhuma outra cadeia produzida por um código livre de prefixos é mais curta que
+    a cadeia produzida pelo algoritmo de Huffman.
+
+... mas
+    a cadeia de bits produzida pelo algoritmo não pode ser decodificada sem a trie
+    correspondente. Ela deve ser acrescentada à cadeia codificada. Ela será escrita
+    em preorder no código.
+
+```
+private static Node buildTrie(int[] freq) {
+    MinPQ<Node> pq = new MinPQ<Node>();
+    for (char c = 0; c < R; c++)
+        if (freq[c] > 0)
+            pq.insert(new Node(c, freq[c], null, null));
+    while (pq.size() > 1) {
+        Node x = pq.delMin();
+        Node y = pq.delMin();
+        Node parent = new Node('\0', x.freq + y.freq, x, y);
+        pq.insert(parent);
+    }
+    return pq.delMin();
+}
+
+private static void buildCode(String[] st, Node x, String s) {
+    if (x.isLeaf()) {
+        st[x.ch] = s;
+        return;
+    }
+    buildCode(st, x.left, s + '0');
+    buildCode(st, x.right, s + '1')
+}
+
+private static void writeTrie(Node x) {
+    if (x.isLeaf()) {
+        BinaryOut.write(true);
+        BinaryOut.write(x.ch);
+        return;
+    }
+    BinaryOut.write(false);
+    writeTrie(x.left);
+    writeTrie(x.right);
+}
+```
+
+#### Decodificação
+
+```
+public static void expand() {
+    Node root = readTrie();
+    int n = BinaryIn.readInt();
+    for (int i = 0; i < n; i++) {
+        Node x = root;
+        while (!x.isLeaf()) {
+            if (BinaryIn.readBoolean())
+                x = x.right;
+            ekse x = x.left;
+        }
+        BinaryOut.write(x.ch);
+    }
+    BinaryOut.close()
+}
+
+private static Node readTrie() {
+    if (BinaryIn.readBoolean()) {
+        char c = BinaryIn.readChar();
+        return new Node(c, 0, null, null);
+    }
+    return new Node('\0', 0, readTrie(), readTrie());
+}
+```
+
+#### Compressão completa
+
+```
+public static void compress() {
+    String s = BinaryIn.readString();
+    char[] input = s.toCharArray();
+    int[] freq = new int[R];
+    for (int i = 0; i < input.length; i++)
+        freq[input[i]]++;
+    Node root = buildTrie(freq);
+    String[] st = buildCode(root);
+    writeTrie(root);
+    BinaryOut.write(input.length);
+    for (int i = 0; i < input.length; i++) {
+        String code = st[input[i]];
+        for (int j = 0; j < code.length(); j++)
+            if (code.charAt(j) == '1')
+                BinaryOut.write(true);
+            else
+                BinaryOut.write(false);
+    }
+    BinaryOut.close();
+}

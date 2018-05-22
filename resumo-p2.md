@@ -741,3 +741,120 @@ O número esperado de nós visitados durante uma busca malsucedida em uma trie c
 chaves aleatórias sobre um alfabeto de tamanho R é aproximadamente log_R n.
 
 ## Tries ternárias (TSTs)
+
+O maior problema das tries é o espaço, já que cada nó contém R referências, assim
+cada nó utiliza pelo menos 8R bytes. Para evitar o custo excessivo de espaço,
+representamos uma trie baseando-nos na estrutura de uma árvore ternária.
+
+```
+
+root --------------------------*
+                               |       link para a TST de todas as chaves que começam
+link para a TST de chaves      v         |      com uma letra depois de s
+ que começam com menor       +---+       V
+que s  +-------------------- | s | --------------------+
+       |                     +---+                     |
+       |                       | s                     |
+       V                       V <= link para TST com  V
+     +---+                   +---+  todas as chaves   +---+
+     | b |                   | h |  que começam com   | t |
+     +---+                   +---+  s.                +---+
+
+```
+
+Os links da estrutura correspondem a caracteres. Nas figuras, o caractere escrito
+dentro de um nó é o caractere do link que sai pelo meio do nó. TSTs são compostas
+por nós do tipo Node.
+
+```
+private static class Node {
+    private char c;
+    private Value val;
+    private Node left, mid, right;
+}
+```
+
+### Operações
+
+```
+private Node get(Node x, String key, int d) {
+    char c = key.charAt(d);
+    if (x == null) return null;
+    if (c < x.c)
+        return get(x.left, key, d);
+    if (c > x.c)
+        return get(x.right, key, d);
+    if (d < key.length() - 1)
+        return get(x.mid, key, d+1);
+    return x;
+}
+
+public void put(String key, Value val) {
+    r = put(r, key, val, 0);
+}
+
+private Node put(Node x, String key, Value val, int d) {
+    char c = s.charAt(d);
+    if (x == null) {
+        x = new Node();
+        x.c = c
+    }
+    if (c < x.c)
+        x.left = put(x.left, s, val, d);
+    else if (c > x.c)
+        x.right = put(x.right, s, val, d);
+    else if (d < s.length() - 1)
+        x.mid = put(x.mid, s, val, d+1);
+    else x.val = val;
+    return x;
+}
+
+private void collect(Node x, String pre, Queue<String> q) {
+    if (x == null) return;
+    collect(x.left, pre, q);
+    if (x.val != null) q.enqueue(pre+x.c);
+    collect(x.mid, pre+x.c, q);
+    collect(x.right, pre, q);
+}
+
+public String longestPrefixOf(String s) {
+    if (s == null || s.length() == 0)
+        return null;
+    int max = 0;
+    Node x = r;
+    int i = 0;
+    while (x != null & i < s.length()) {
+        char c = s.charAt(i);
+        if (c < x.c) x = x.left;
+        else if (c > x.c) x = x.right;
+        else {
+            i++;
+            if (x.val != null) max = i;
+            x = x.mid;
+        }
+    }
+    return s.substring(0, max)
+}
+
+private void match(Node x, String pre, int i, String pat, Queue<String> q) {
+    if (x == null) return;
+    char c = pat.charAt(i);
+    if (c == "." || c < x.c)
+        match(x.left, pre, i, pat, q);
+    if (c == "." || c == x.c) {
+        if (i == pat.length() - 1) && x.val != null)
+            q.enqueue(pre+x.c);
+        else if ( i < pat.length() - 1)
+            match(x.mid, pre+x.c, i+1, pat, q);
+    }
+    if (c == "." || c > x.c)
+        match(x.right, pre, i, pat, q);
+}
+```
+
+### Consumo de espaço e tempo
+
+A propriedade mais importante de uma TST é que ela tem apenas três links por
+nó. O número de links em uma TST com n chaves de comprimento médio w é
+ entre 3n e 3nw. O número esperado de nós visitados durante uma busca malsucedida
+ em uma TST com n chaves aleatórias é aproximadamente lg n.
